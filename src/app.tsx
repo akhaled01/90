@@ -13,6 +13,7 @@ import {createOpenRouter} from '@openrouter/ai-sdk-provider';
 import {stepCountIs, streamText} from 'ai';
 import {config} from 'dotenv';
 import {fsTools} from './tools/fs.js';
+import {bashTool} from './tools/bash.js';
 
 config({debug: false});
 
@@ -118,7 +119,7 @@ export default function App() {
 							content: userMessage,
 						},
 					],
-					tools: fsTools,
+					tools: { ...fsTools, bash: bashTool },
 					stopWhen: stepCountIs(20),
 				});
 
