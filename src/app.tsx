@@ -13,7 +13,7 @@ import {createOpenRouter} from '@openrouter/ai-sdk-provider';
 import {streamText} from 'ai';
 import {config} from 'dotenv';
 
-config();
+config({ debug: false });
 
 export default function App() {
 	const [messages, setMessages] = useState<Message[]>([]);
