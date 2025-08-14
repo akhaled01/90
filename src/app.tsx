@@ -1,6 +1,6 @@
 import React, {useState, useCallback} from 'react';
 import {Box, useInput, useApp} from 'ink';
-import {Message} from './types.js';
+import {Message, TokenUsage} from './types.js';
 import {slashCommands} from './constants.js';
 import {
 	MessageList,
@@ -19,7 +19,12 @@ export default function App() {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
-	const [tokenCount, setTokenCount] = useState(1247);
+	const [tokenUsage, setTokenUsage] = useState<TokenUsage>({
+		inputTokens: 0,
+		outputTokens: 0,
+		reasoningTokens: 0,
+		totalTokens: 0,
+	});
 	const [showSlashMenu, setShowSlashMenu] = useState(false);
 	const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 	const {exit} = useApp();
@@ -121,14 +126,22 @@ export default function App() {
 				for await (const textPart of result.textStream) {
 					currentContent += textPart;
 					updateLastMessage(currentContent, true);
-
-					// Add token count incrementally based on actual content
-					setTokenCount(prev => prev + textPart.length);
 				}
 
-				// Mark streaming as complete
+				// Mark streaming as complete and get final usage data
 				updateLastMessage(currentContent, false);
 				setIsLoading(false);
+
+				// Get actual token usage from the result
+				const usage = await result.usage;
+				if (usage) {
+					setTokenUsage(prev => ({
+						inputTokens: prev.inputTokens + (usage.inputTokens || 0),
+						outputTokens: prev.outputTokens + (usage.outputTokens || 0),
+						reasoningTokens: (prev.reasoningTokens || 0) + (usage.reasoningTokens || 0),
+						totalTokens: prev.totalTokens + (usage.totalTokens || 0),
+					}));
+				}
 			} catch (error) {
 				console.error('Streaming error:', error);
 				updateLastMessage(
@@ -155,12 +168,9 @@ export default function App() {
 				setInput('');
 				addMessage('user', userMessage);
 				setIsLoading(true);
-				setTokenCount(prev => prev + Math.floor(Math.random() * 100) + 50);
 
-				// Simulate initial delay before response starts
-				setTimeout(async () => {
-					await streamResponse(userMessage);
-				}, 500 + Math.random() * 1000);
+				// Start streaming response immediately
+				await streamResponse(userMessage);
 			}
 		},
 		[input, isLoading, addMessage, streamResponse],
@@ -179,7 +189,7 @@ export default function App() {
 			</Box>
 
 			<InlineMetadata
-				tokenCount={tokenCount}
+				tokenCount={tokenUsage}
 				messages={messages}
 				isLoading={isLoading}
 			/>
@@ -200,12 +210,12 @@ export default function App() {
 
 			<StatusBar />
 
-			{showSlashMenu && filteredCommands.length > 0 && (
+			{showSlashMenu && filteredCommands.length > 0 ? (
 				<SlashCommandMenu
 					commands={filteredCommands}
 					selectedIndex={selectedCommandIndex}
 				/>
-			)}
+			) : null}
 		</Box>
 	);
 }

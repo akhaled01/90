@@ -14,3 +14,10 @@ export type SlashCommand = {
 	description: string;
 	example: string;
 };
+
+export type TokenUsage = {
+	inputTokens: number;
+	outputTokens: number;
+	reasoningTokens?: number;
+	totalTokens: number;
+};

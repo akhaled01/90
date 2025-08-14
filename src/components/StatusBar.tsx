@@ -5,12 +5,7 @@ export const StatusBar = () => (
 	<Box justifyContent="space-between">
 		<Box>
 			<Text color="cyan" dimColor>
-				✓ Auto-edits: ON • Model: claude-3-sonnet
-			</Text>
-		</Box>
-		<Box>
-			<Text color="blue" dimColor>
-				📁 Current: app.tsx
+				Model: gpt-oss-20b
 			</Text>
 		</Box>
 	</Box>

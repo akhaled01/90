@@ -1,10 +1,10 @@
 import React from 'react';
 import { Text, Box } from 'ink';
 import Spinner from 'ink-spinner';
-import { Message } from '../types.js';
+import { Message, TokenUsage } from '../types.js';
 
 interface InlineMetadataProps {
-	tokenCount: number;
+	tokenCount: TokenUsage;
 	messages: Message[];
 	isLoading: boolean;
 }
@@ -22,13 +22,46 @@ export const InlineMetadata = ({
 					<Text color="yellow"> Thinking</Text>
 				</Box>
 			)}
-			<Text color="gray" dimColor>
-				{tokenCount.toLocaleString()} tokens • {messages.length} messages •
-				claude-3-sonnet
-			</Text>
+			<Box flexDirection="row" alignItems="center">
+				<Text color="blue">↓ </Text>
+				<Box marginRight={1}>
+					<Text color="gray" dimColor>
+						{(tokenCount.inputTokens || 0).toLocaleString()}
+					</Text>
+				</Box>
+				<Text color="green">↑ </Text>
+				<Box marginRight={1}>
+					<Text color="gray" dimColor>
+						{(tokenCount.outputTokens || 0).toLocaleString()}
+					</Text>
+				</Box>
+				{tokenCount.reasoningTokens && tokenCount.reasoningTokens > 0 ? (
+					<>
+						<Text color="purple">⚡ </Text>
+						<Box marginRight={1}>
+							<Text color="gray" dimColor>
+								{(tokenCount.reasoningTokens || 0).toLocaleString()}
+							</Text>
+						</Box>
+					</>
+				) : null}
+				<Text color="yellow">Σ </Text>
+				<Box marginRight={2}>
+					<Text color="gray" dimColor>
+						{(tokenCount.totalTokens || 0).toLocaleString()}
+					</Text>
+				</Box>
+				<Text color="gray" dimColor>
+					• {messages.length || 0} messages • gpt-oss-20b
+				</Text>
+			</Box>
 		</Box>
 		<Text color="gray" dimColor>
-			{new Date().toLocaleTimeString()}
+			{new Date().toLocaleTimeString('en-US', {
+				hour: 'numeric',
+				minute: '2-digit',
+				hour12: true,
+			})}
 		</Text>
 	</Box>
 );
