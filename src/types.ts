@@ -21,3 +21,28 @@ export type TokenUsage = {
 	reasoningTokens?: number;
 	totalTokens: number;
 };
+
+export type ToolCall = {
+	id: string;
+	type: 'function';
+	function: {
+		name: string;
+		arguments: string;
+	};
+};
+
+export type ToolResult = {
+	toolCallId: string;
+	result: any;
+	error?: string;
+};
+
+export type FileEditTool = {
+	name: 'read_file' | 'write_file' | 'edit_file' | 'list_files';
+	description: string;
+	parameters: {
+		type: 'object';
+		properties: Record<string, any>;
+		required: string[];
+	};
+};

@@ -1,7 +1,7 @@
 import React, {useState, useCallback} from 'react';
 import {Box, useInput, useApp} from 'ink';
 import {Message, TokenUsage} from './types.js';
-import {slashCommands} from './constants.js';
+import {slashCommands, SYSTEM_PROMPT} from './constants.js';
 import {
 	MessageList,
 	SlashCommandMenu,
@@ -10,10 +10,11 @@ import {
 	StatusBar,
 } from './components/index.js';
 import {createOpenRouter} from '@openrouter/ai-sdk-provider';
-import {streamText} from 'ai';
+import {stepCountIs, streamText} from 'ai';
 import {config} from 'dotenv';
+import {fsTools} from './tools/fs.js';
 
-config({ debug: false });
+config({debug: false});
 
 export default function App() {
 	const [messages, setMessages] = useState<Message[]>([]);
@@ -110,21 +111,22 @@ export default function App() {
 					messages: [
 						{
 							role: 'system',
-							content:
-								'You are a helpful full stack engineer specialized in React and Node.js. Provide clear, concise responses with practical examples when appropriate. You will recieve tool calling abilities later',
+							content: SYSTEM_PROMPT,
 						},
 						{
 							role: 'user',
 							content: userMessage,
 						},
 					],
+					tools: fsTools,
+					stopWhen: stepCountIs(20),
 				});
 
 				let currentContent = '';
 
-				// Stream the actual AI response
-				for await (const textPart of result.textStream) {
-					currentContent += textPart;
+				// Handle both tool calls and text streaming
+				for await (const delta of result.textStream) {
+					currentContent += delta;
 					updateLastMessage(currentContent, true);
 				}
 
@@ -138,7 +140,8 @@ export default function App() {
 					setTokenUsage(prev => ({
 						inputTokens: prev.inputTokens + (usage.inputTokens || 0),
 						outputTokens: prev.outputTokens + (usage.outputTokens || 0),
-						reasoningTokens: (prev.reasoningTokens || 0) + (usage.reasoningTokens || 0),
+						reasoningTokens:
+							(prev.reasoningTokens || 0) + (usage.reasoningTokens || 0),
 						totalTokens: prev.totalTokens + (usage.totalTokens || 0),
 					}));
 				}
