@@ -6,6 +6,7 @@ export type Message = {
 	hasToolCalls?: boolean;
 	isSlashCommand?: boolean;
 	slashCommand?: string;
+	isStreaming?: boolean;
 };
 
 export type SlashCommand = {

@@ -138,6 +138,9 @@ export const MessageList = ({ messages }: MessageListProps) => {
 							>
 								<Box flexDirection="column" flexGrow={1}>
 									{renderMessageContent(message.content)}
+									{message.isStreaming && (
+										<Text color="gray"></Text>
+									)}
 								</Box>
 							</Box>
 						</Box>

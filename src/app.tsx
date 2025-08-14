@@ -50,6 +50,7 @@ export default function App() {
 			hasToolCalls?: boolean,
 			isSlashCommand?: boolean,
 			slashCommand?: string,
+			isStreaming?: boolean,
 		) => {
 			const message: Message = {
 				id: Math.random().toString(36).substring(2, 11),
@@ -59,11 +60,50 @@ export default function App() {
 				hasToolCalls,
 				isSlashCommand,
 				slashCommand,
+				isStreaming,
 			};
 			setMessages(prev => [...prev, message]);
 		},
 		[],
 	);
+
+	const updateLastMessage = useCallback((content: string, isStreaming?: boolean) => {
+		setMessages(prev => {
+			if (prev.length === 0) return prev;
+			const lastMessage = prev[prev.length - 1];
+			if (!lastMessage) return prev;
+			const updatedMessage: Message = { 
+				...lastMessage, 
+				content, 
+				isStreaming: isStreaming ?? lastMessage.isStreaming 
+			};
+			return [...prev.slice(0, -1), updatedMessage];
+		});
+	}, []);
+
+	const streamResponse = useCallback(async (fullResponse: string, hasToolCalls: boolean) => {
+		// Add initial empty assistant message
+		addMessage('assistant', '', hasToolCalls, false, undefined, true);
+		
+		// Split response into words for streaming
+		const words = fullResponse.split(' ');
+		let currentContent = '';
+		
+		for (let i = 0; i < words.length; i++) {
+			currentContent += (i > 0 ? ' ' : '') + words[i];
+			updateLastMessage(currentContent, true);
+			
+			// Add token count incrementally
+			setTokenCount(prev => prev + Math.floor(Math.random() * 3) + 1);
+			
+			// Random delay between words to simulate streaming
+			await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
+		}
+		
+		// Mark streaming as complete
+		updateLastMessage(currentContent, false);
+		setIsLoading(false);
+	}, [addMessage, updateLastMessage]);
 
 	const sendMessage = useCallback(
 		async (slashCommand?: string) => {
@@ -81,7 +121,8 @@ export default function App() {
 				setIsLoading(true);
 				setTokenCount(prev => prev + Math.floor(Math.random() * 100) + 50);
 
-				setTimeout(() => {
+				// Simulate initial delay before response starts
+				setTimeout(async () => {
 					const mockResponse = getRandomResponse(userMessage);
 					// Simulate tool calls for responses containing certain keywords
 					const hasToolCalls =
@@ -89,13 +130,12 @@ export default function App() {
 						mockResponse.includes('Modified files') ||
 						mockResponse.includes('file diff') ||
 						Math.random() > 0.7; // Random 30% chance for demo
-					addMessage('assistant', mockResponse, hasToolCalls);
-					setIsLoading(false);
-					setTokenCount(prev => prev + Math.floor(Math.random() * 150) + 100);
-				}, 1000 + Math.random() * 2000);
+					
+					await streamResponse(mockResponse, hasToolCalls);
+				}, 500 + Math.random() * 1000);
 			}
 		},
-		[input, isLoading, addMessage],
+		[input, isLoading, addMessage, streamResponse],
 	);
 
 	useInput((inputKey: string, key: any) => {
