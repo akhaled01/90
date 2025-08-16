@@ -15,7 +15,7 @@ import {config} from 'dotenv';
 import {fsTools} from './tools/fs.js';
 import {bashTool} from './tools/bash.js';
 
-config({debug: false});
+config({debug: false, path: "/Users/lo/90-cli/.env"});
 
 export default function App() {
 	const [messages, setMessages] = useState<Message[]>([]);
